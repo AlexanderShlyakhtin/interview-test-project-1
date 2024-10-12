@@ -1,0 +1,17 @@
+version: '3.8'
+
+networks:
+  bitruby_net:
+    driver: bridge
+
+services:
+
+  bitruby-test-postgres:
+    image: postgres:latest
+    ports:
+      - 5430:5432
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bitruby
+    container_name: bitruby-test-postgres

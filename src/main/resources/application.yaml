@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: test-service
+  liquibase:
+    change-log: db/db.changelog.yaml
+    liquibase-schema: public
+  datasource:
+    url: jdbc:postgresql://localhost:5430/bitruby
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        default_schema: public
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
