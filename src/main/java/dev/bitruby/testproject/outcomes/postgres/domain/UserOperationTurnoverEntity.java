@@ -1,11 +1,13 @@
 package dev.bitruby.testproject.outcomes.postgres.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Immutable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

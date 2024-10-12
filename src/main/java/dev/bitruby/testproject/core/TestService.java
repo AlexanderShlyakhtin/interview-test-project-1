@@ -1,4 +1,4 @@
 package dev.bitruby.testproject.core;
 
-public class Service {
+public class TestService {
 }
