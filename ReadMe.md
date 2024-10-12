@@ -90,12 +90,12 @@ SELECT generate_user_operations_turnover_records();
 WITH target_currency_rate AS (
     SELECT cr.currency_id, cr.rate
     FROM currencies_rate cr
-    WHERE cr.currency_id = 'BTC' -- Указать целевую валюту (например, BTC)
+    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
 )
 SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
 FROM user_operations_turnover
 WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
-  AND executed_at BETWEEN now() - INTERVAL '24 hours' AND now()
+  AND executed_at >= now() - INTERVAL '1 days'
 GROUP BY currency) tmp
 LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
 CROSS JOIN target_currency_rate tcr;
@@ -103,12 +103,24 @@ CROSS JOIN target_currency_rate tcr;
 WITH target_currency_rate AS (
     SELECT cr.currency_id, cr.rate
     FROM currencies_rate cr
-    WHERE cr.currency_id = 'BTC' -- Указать целевую валюту (например, BTC)
+    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
 )
 SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
 FROM user_operations_turnover
 WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
-  AND executed_at BETWEEN now() - INTERVAL '7 days' AND now()
+  AND executed_at >= now() - INTERVAL '7 days'
+GROUP BY currency) tmp
+LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
+CROSS JOIN target_currency_rate tcr;
+
+WITH target_currency_rate AS (
+    SELECT cr.currency_id, cr.rate
+    FROM currencies_rate cr
+    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
+)
+SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
+FROM user_operations_turnover
+WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
 GROUP BY currency) tmp
 LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
 CROSS JOIN target_currency_rate tcr;
