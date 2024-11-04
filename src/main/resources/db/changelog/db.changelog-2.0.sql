@@ -29,11 +29,11 @@ INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-81
 INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d22', 'USDT', 'CRYPTO');
 
 --changeset test:2
-INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233151', 'KGS', 85.5500);
-INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233152', 'KZT', 100.0585);
-INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233153', 'RUB', 3.8536);
+INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233151', 'KGS', 0.0117);
+INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233152', 'KZT', 0.002);
+INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233153', 'RUB', 0.20);
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233154', 'EUR', 0.918864);
-INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233156', 'AED', 495.2500);
+INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233156', 'AED', 0.0075);
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d14', 'NEAR', 4.7804);
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d2b', 'XRP', 0.5399);
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d9b', 'TON', 5.275);
