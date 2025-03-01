@@ -19,4 +19,7 @@ public class CurrencyEntity {
   @Column(name = "CODE", unique = true, nullable = false)
   private String code;
 
+  @Column(name = "IS_ACTIVE", nullable = false)
+  private Boolean isActive;
+
 }
