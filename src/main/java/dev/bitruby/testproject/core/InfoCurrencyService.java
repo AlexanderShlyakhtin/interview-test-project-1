@@ -7,13 +7,13 @@ import dev.bitruby.testproject.outcomes.postgres.domain.CurrencyRateEntity;
 import dev.bitruby.testproject.outcomes.postgres.repository.CurrencyRateRepository;
 import dev.bitruby.testproject.outcomes.postgres.repository.CurrencyRepository;
 import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-@Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 @Transactional
 public class InfoCurrencyService {
 
