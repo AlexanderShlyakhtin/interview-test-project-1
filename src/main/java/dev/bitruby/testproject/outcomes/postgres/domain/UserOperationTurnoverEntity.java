@@ -31,10 +31,7 @@ public class UserOperationTurnoverEntity {
   @Column(name = "user_id", nullable = false)
   private UUID userId;
 
-  @Column(name = "subject", nullable = false)
-  private String subject;
-
-  @Column(name = "amount", nullable = false)
+  @Column(name = "amount", nullable = false, scale = 18, precision = 38)
   private BigDecimal amount;
 
   @Column(name = "executed_at", nullable = false)

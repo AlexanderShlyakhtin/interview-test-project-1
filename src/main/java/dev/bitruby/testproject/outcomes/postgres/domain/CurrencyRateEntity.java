@@ -20,7 +20,7 @@ public class CurrencyRateEntity {
   @JoinColumn(name = "currency_id", nullable = false, referencedColumnName = "code")
   private CurrencyEntity currency;
 
-  @Column(name = "rate", nullable = false, scale = 10, precision = 4)
+  @Column(name = "rate", nullable = false, scale = 18, precision = 38)
   private BigDecimal rate;
 
 }
