@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -16,10 +17,19 @@ public class CurrencyEntity {
   @GeneratedValue(strategy = GenerationType.UUID)
   UUID id;
 
-  @Column(name = "CODE", unique = true, nullable = false)
+  @Column(name = "code", unique = true, nullable = false)
   private String code;
 
-  @Column(name = "IS_ACTIVE", nullable = false)
+  @Column(name = "is_active", nullable = false)
   private Boolean isActive;
+
+  @Column(name = "min_deposit_amount", nullable = false, scale = 18, precision = 38)
+  private BigDecimal minDepositAmount;
+
+  @Column(name = "min_withdraw_amount", nullable = false, scale = 18, precision = 38)
+  private BigDecimal minWithdrawAmount;
+
+  @Column(name = "min_exchange_amount", nullable = false, scale = 18, precision = 38)
+  private BigDecimal maxExchangeAmount;
 
 }

@@ -1,11 +1,14 @@
 
 1. Информация по БД:
-![currencies_rate.png](currencies_rate.png)
+![img.png](img.png)
 
 
 - Таблица supported_currencies хранит доступные валюты в системе
   - id - UUID primary key
   - code - VARCHAR(10) - уникальный ключ валюты
+  - min_deposit_amount DECIMAL(38,18) NOT NULL DEFAULT 0, - минимальный объем для депозита
+  - min_withdraw_amount DECIMAL(38,18) NOT NULL DEFAULT 0, - минимальный объем для снятия
+  - min_exchange_amount DECIMAL(38,18) NOT NULL DEFAULT 0 - минимальный объем для обмена
 - Таблица currencies_rate хранит курсы валют для с ссылкой на таблицу supported_currencies(code), где:
   - id - UUID primary key
   - currency_id - FOREIGN KEY to supported_currencies(id)
@@ -29,9 +32,24 @@
        - ee6c8623-02f5-438e-9c4d-24179da54307
     2) Данные сгенерированы для интервала от сейчас до 8 дней минус сейчас. Всего 100 000 записей
 
-2. Задание:
+2. Задания:
 
-1) Сделать контроллер для расчета недельного объема операций пользователя в валюте, которая приходит как параметр
+Задание N1. 
+
+Имеется метод, который периодично принимает информацию по доступным монетам в системе и их курсам. 
+   Сервис должен:
+
+       - Добавлять монеты их как выключенные, если их нет в системе
+       - Если монета пришла, то проверять и обновлять информацию по ней
+       - Если монета не пришла, но есть в бд, то принудительно выключать ее
+   
+   Сервис был написан недобросоветным разработчиком, который возможно не реализовал все бизнес требования. Вам необходимо изучить сервис и 
+    проверить были ли реализованы все требования. Если какое-то требование не было реализовано, то вам необходимо имплементировать его. 
+   
+    
+Задание N2.
+
+Сделать контроллер для расчета недельного объема операций пользователя в валюте, которая приходит как параметр
    Требования:
 
        - Входит в группу /turnover  
@@ -55,30 +73,8 @@
 }
 ```
 
-4. SQL чтобы проверить результаты:
 
-```sql
-WITH target_currency_rate AS (
-    SELECT cr.currency_id, cr.rate
-    FROM currencies_rate cr
-    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
-)
-SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
-FROM user_operations_turnover
-WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
-  AND executed_at >= now() - INTERVAL '1 days'
-GROUP BY currency) tmp
-LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
-CROSS JOIN target_currency_rate tcr;
-
-WITH target_currency_rate AS (
-    SELECT cr.currency_id, cr.rate
-    FROM currencies_rate cr
-    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
-)
-```
-
-Скрипт для генерации данных
+3. Скрипт для генерации данных
 ```sql
 CREATE OR REPLACE FUNCTION generate_user_operations_turnover_records()
     RETURNS void AS $$
@@ -124,3 +120,26 @@ $$ LANGUAGE plpgsql;
 
 SELECT generate_user_operations_turnover_records();
 ```
+
+4. SQL чтобы проверить результаты:
+```sql
+WITH target_currency_rate AS (
+    SELECT cr.currency_id, cr.rate
+    FROM currencies_rate cr
+    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
+)
+SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
+FROM user_operations_turnover
+WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
+  AND executed_at >= now() - INTERVAL '1 days'
+GROUP BY currency) tmp
+LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
+CROSS JOIN target_currency_rate tcr;
+
+WITH target_currency_rate AS (
+    SELECT cr.currency_id, cr.rate
+    FROM currencies_rate cr
+    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
+)
+```
+

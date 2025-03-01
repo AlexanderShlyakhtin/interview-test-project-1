@@ -16,7 +16,10 @@ CREATE TABLE supported_currencies
 (
     id UUID PRIMARY KEY,
     code VARCHAR(10) NOT NULL UNIQUE,
-    is_active BOOLEAN NOT NULL DEFAULT false
+    is_active BOOLEAN NOT NULL DEFAULT false,
+    min_deposit_amount DECIMAL(38,18) NOT NULL DEFAULT 0,
+    min_withdraw_amount DECIMAL(38,18) NOT NULL DEFAULT 0,
+    min_exchange_amount DECIMAL(38,18) NOT NULL DEFAULT 0
 );
 --changeset test:3
 CREATE TABLE currencies_rate
