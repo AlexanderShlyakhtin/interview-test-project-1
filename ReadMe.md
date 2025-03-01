@@ -2,28 +2,45 @@
 1. Информация по БД:
 ![currencies_rate.png](currencies_rate.png)
 
-Таблица supported_currencies хранит доступные валюты в системе
 
-Таблица currencies_rate хранит курсы валют для с ссылкой на таблицу supported_currencies(code), где:
-1) Курс валют type FIAT выражен в USD
-2) Курс валют type CRYPTO выражен в USDT
-3) По умолчанию, что USD = USDT
+- Таблица supported_currencies хранит доступные валюты в системе
+  - id - UUID primary key
+  - code - VARCHAR(10) - уникальный ключ валюты
+- Таблица currencies_rate хранит курсы валют для с ссылкой на таблицу supported_currencies(code), где:
+  - id - UUID primary key
+  - currency_id - FOREIGN KEY to supported_currencies(id)
+  - rate DECIMAL(38,18) - курс монеты
+- Таблица user_operations_turnover хранит историю операций пользователей, причем поле currency хранить валюты
+  которые 100% присуствуют в supported_currencies(code).
+  - operation_id - UUID PRIMARY KEY 
+  - currency - VARCHAR(10) код валюты, в которой была совершена операция
+  - user_id - UUID ИД пользователя, который соврешил операцию
+  - amount - DECIMAL(38,18) сумма сделки в натуральном выражении (если была сделана в XRP, то объект купленных или проданных XRP)
+  - executed_at - TIMESTAMP NOT NULL время, когда была сделана операция
 
-Таблица user_operations_turnover хранит историю операций пользователей, причем currency это supported_currencies(code).
-В таблице существуют два пользователя Существует в БД для пользователя ee6c8623-02f5-438e-9c4d-24179da54307, 5c6569b5-57e8-45ab-a72f-ff7affbd874e.
-Данные сгенерированы для интервала от сейчас до 8 дней минус сейчас. Всего 100 000 записей
+Дополнительная информация:
+  - currencies_rate
+    1) Курс валют type FIAT выражен в USD. (Например, 1 USD = 90 RUB)
+    2) Курс валют type CRYPTO выражен в USDT (Например, 1 BTC = 62869.94 USDT)
+    3) По умолчанию, что USD = USDT. USD и USDT также присуствуют в таблице рейтов (1 USD = 1 USD, 1 USDT = 1 USDT) для удобства
+  - user_operations_turnover
+    1) В таблице существуют два пользователя Существует в БД для пользователя:
+       - 5c6569b5-57e8-45ab-a72f-ff7affbd874e
+       - ee6c8623-02f5-438e-9c4d-24179da54307
+    2) Данные сгенерированы для интервала от сейчас до 8 дней минус сейчас. Всего 100 000 записей
 
 2. Задание:
- 1) Сделать два контроллера для расчета дневного и недельного объема операций пользователя в валюте
-    Требования:
 
-        - Входит в группу /turnover  
-        - Возвращает 200 статус код  
-        - GET метод с энпоинтом /daily и /week
-        - /daily оборот - это сейчас минус 24 часа, и /week - это оборот за сейчас минус 7*24 часа
-        - Принимает обязательный path параметр (user-id)  
-        - Принимает обязательный query параметр (coin) который определяет валюту в который необходимо рассчитать объем операций
-        - Ответ необходимо отправить объект с одним полем result в качестве числа выраженного в валюте, которая была прислала (coin).
+1) Сделать контроллер для расчета недельного объема операций пользователя в валюте, которая приходит как параметр
+   Требования:
+
+       - Входит в группу /turnover  
+       - Возвращает 200 статус код  
+       - GET метод с энпоинтом /week
+       - /week - это оборот за сейчас минус 7*24 часа
+       - Принимает обязательный path параметр (user-id)  
+       - Принимает обязательный query параметр (coin) который определяет валюту в который необходимо рассчитать объем операций (Если отправляется RUB, то сумма всех операций в рубле)
+       - Ответ необходимо отправить объект с одним полем result в качестве числа выраженного в валюте, которая была прислала (coin).
 
 
 Например:
@@ -59,23 +76,51 @@ WITH target_currency_rate AS (
     FROM currencies_rate cr
     WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
 )
-SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
-FROM user_operations_turnover
-WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
-  AND executed_at >= now() - INTERVAL '7 days'
-GROUP BY currency) tmp
-LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
-CROSS JOIN target_currency_rate tcr;
+```
 
-WITH target_currency_rate AS (
-    SELECT cr.currency_id, cr.rate
-    FROM currencies_rate cr
-    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
-)
-SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
-FROM user_operations_turnover
-WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
-GROUP BY currency) tmp
-LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
-CROSS JOIN target_currency_rate tcr;
+Скрипт для генерации данных
+```sql
+CREATE OR REPLACE FUNCTION generate_user_operations_turnover_records()
+    RETURNS void AS $$
+DECLARE
+    rec_currency RECORD;
+    rec_type RECORD;
+    currency_code TEXT;
+    currency_type TEXT;
+    random_amount NUMERIC;
+    random_date TIMESTAMP;
+    random_user_id UUID;
+    i INTEGER;
+BEGIN
+    FOR i IN 1..100000 LOOP
+            SELECT code, type INTO rec_currency
+            FROM supported_currencies
+            ORDER BY random()
+            LIMIT 1;
+            currency_code := rec_currency.code;
+            currency_type := rec_currency.type;
+            IF currency_type = 'FIAT' THEN
+                random_amount := round(CAST(random() * 100000 AS numeric), 2);
+            ELSE
+                random_amount := round(CAST(random() * 100000 AS numeric), 8);
+            END IF;
+            random_date := NOW() - (random() * INTERVAL '8 days');
+            random_user_id := CASE WHEN random() < 0.5
+                                       THEN 'ee6c8623-02f5-438e-9c4d-24179da54307'::UUID
+                                   ELSE '5c6569b5-57e8-45ab-a72f-ff7affbd874e'::UUID
+                END;
+            INSERT INTO user_operations_turnover (operation_id, currency, user_id, subject, amount, executed_at)
+            VALUES (
+                       gen_random_uuid(),           
+                       currency_code,               
+                       random_user_id,              
+                       currency_type,               
+                       random_amount,               
+                       random_date                  
+                   );
+        END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT generate_user_operations_turnover_records();
 ```

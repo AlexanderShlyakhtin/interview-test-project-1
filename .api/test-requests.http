@@ -2,10 +2,6 @@ GET http://localhost:8080/turnover/daily/ee6c8623-02f5-438e-9c4d-24179da54307?co
 Accept: application/json
 ###
 
-GET http://localhost:8080/turnover/weekly/ee6c8623-02f5-438e-9c4d-24179da54307?coin=USD
-Accept: application/json
-###
-
 GET http://localhost:8080/turnover/ee6c8623-02f5-438e-9c4d-24179da54307?coin=USD
 Accept: application/json
 ###
