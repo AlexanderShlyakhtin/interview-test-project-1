@@ -4,10 +4,11 @@ spring:
   liquibase:
     change-log: db/db.changelog.yaml
     liquibase-schema: public
+    enabled: false
   datasource:
-    url: jdbc:postgresql://localhost:5430/bitruby
+    url: jdbc:postgresql://ep-dark-waterfall-a24e6tlj-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require
     username: user
-    password: password
+    password: npg_H6UYNni1Mljp
     driver-class-name: org.postgresql.Driver
   jpa:
     properties:
