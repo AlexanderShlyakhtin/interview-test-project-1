@@ -8,7 +8,6 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 @RequiredArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
 public class CoinInfoListItem {

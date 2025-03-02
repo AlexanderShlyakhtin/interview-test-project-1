@@ -10,7 +10,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
 public class CoinInfoRequest {
 
   private List<CoinInfoListItem> coinList;
