@@ -28,6 +28,9 @@ public class UserOperationTurnoverEntity {
   @Column(name = "currency", nullable = false)
   private String currency; // For example, USD,EUR,BTC
 
+  @Column(name = "subject", nullable = false)
+  private String subject; // For example, FIAT min accuracy - 2, for CRYPTO - 8
+
   @Column(name = "user_id", nullable = false)
   private UUID userId;
 

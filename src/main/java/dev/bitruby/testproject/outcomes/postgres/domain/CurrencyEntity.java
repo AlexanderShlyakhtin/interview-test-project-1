@@ -23,6 +23,9 @@ public class CurrencyEntity {
   @Column(name = "is_active", nullable = false)
   private Boolean isActive;
 
+  @Column(name = "type", nullable = false)
+  private String type;
+
   @Column(name = "min_deposit_amount", nullable = false, scale = 18, precision = 38)
   private BigDecimal minDepositAmount;
 
