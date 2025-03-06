@@ -6,6 +6,7 @@
 - Таблица supported_currencies хранит доступные валюты в системе
   - id - UUID primary key
   - code - VARCHAR(10) - уникальный ключ валюты
+  - is_active - Boolean - флаг свойства монеты. Если true то монета включена для работы в системе
   - min_deposit_amount DECIMAL(38,18) NOT NULL DEFAULT 0, - минимальный объем для депозита
   - min_withdraw_amount DECIMAL(38,18) NOT NULL DEFAULT 0, - минимальный объем для снятия
   - min_exchange_amount DECIMAL(38,18) NOT NULL DEFAULT 0 - минимальный объем для обмена
