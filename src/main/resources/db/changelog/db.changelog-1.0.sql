@@ -16,7 +16,7 @@ CREATE TABLE supported_currencies
     id UUID PRIMARY KEY,
     code VARCHAR(10) NOT NULL UNIQUE,
     is_active BOOLEAN NOT NULL DEFAULT false,
-    type VARCHAR(10) NOT NULL UNIQUE,
+    type VARCHAR(10) NOT NULL,
     min_deposit_amount DECIMAL(38,18) NOT NULL DEFAULT 0,
     min_withdraw_amount DECIMAL(38,18) NOT NULL DEFAULT 0,
     min_exchange_amount DECIMAL(38,18) NOT NULL DEFAULT 0
