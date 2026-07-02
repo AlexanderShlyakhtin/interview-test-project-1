@@ -44,108 +44,12 @@
        - Если монета пришла, то проверять и обновлять информацию по ней
        - Если монета не пришла, но есть в бд, то принудительно выключать ее
    
-   Сервис был написан недобросоветным разработчиком, который возможно не реализовал все бизнес требования. Вам необходимо изучить сервис и 
-    проверить были ли реализованы все требования. Если какое-то требование не было реализовано, то вам необходимо имплементировать его. 
-   
-    
-Задание N2.
-
-Сделать контроллер для расчета недельного объема операций пользователя в валюте, которая приходит как параметр
-   Требования:
-
-       - Входит в группу /turnover  
-       - Возвращает 200 статус код  
-       - GET метод с энпоинтом /week
-       - /week - это оборот за сейчас минус 7*24 часа
-       - Принимает обязательный path параметр (user-id)  
-       - Принимает обязательный query параметр (coin) который определяет валюту в который необходимо рассчитать объем операций (Если отправляется RUB, то сумма всех операций в рубле)
-       - Ответ необходимо отправить объект с одним полем result в качестве числа выраженного в валюте, которая была прислала (coin).
+Сервис был написан недобросоветным разработчиком, который возможно не реализовал все бизнес требования. Вам необходимо изучить сервис и 
+проверить были ли реализованы все требования. Если какое-то требование не было реализовано, то вам необходимо имплементировать его. 
 
 
-Например:
 
-Запрос GET /turnover/daily/ee6c8623-02f5-438e-9c4d-24179da54307?coin=BTC 
-
-Ответ: 
-
-```json
-{
-  "result": 134543.23543
-}
-```
-
-
-3. Скрипт для генерации данных
-```sql
-CREATE OR REPLACE FUNCTION generate_user_operations_turnover_records()
-    RETURNS void AS $$
-DECLARE
-    rec_currency RECORD;
-    rec_type RECORD;
-    currency_code TEXT;
-    currency_type TEXT;
-    random_amount NUMERIC;
-    random_date TIMESTAMP;
-    random_user_id UUID;
-    i INTEGER;
-BEGIN
-    FOR i IN 1..100000 LOOP
-            SELECT code, type INTO rec_currency
-            FROM supported_currencies
-            ORDER BY random()
-            LIMIT 1;
-            currency_code := rec_currency.code;
-            currency_type := rec_currency.type;
-            IF currency_type = 'FIAT' THEN
-                random_amount := round(CAST(random() * 100000 AS numeric), 2);
-            ELSE
-                random_amount := round(CAST(random() * 100000 AS numeric), 8);
-            END IF;
-            random_date := NOW() - (random() * INTERVAL '8 days');
-            random_user_id := CASE WHEN random() < 0.5
-                                       THEN 'ee6c8623-02f5-438e-9c4d-24179da54307'::UUID
-                                   ELSE '5c6569b5-57e8-45ab-a72f-ff7affbd874e'::UUID
-                END;
-            INSERT INTO user_operations_turnover (operation_id, currency, user_id, subject, amount, executed_at)
-            VALUES (
-                       gen_random_uuid(),           
-                       currency_code,               
-                       random_user_id,              
-                       currency_type,               
-                       random_amount,               
-                       random_date                  
-                   );
-        END LOOP;
-END;
-$$ LANGUAGE plpgsql;
-
-SELECT generate_user_operations_turnover_records();
-```
-
-4. SQL чтобы проверить результаты:
-```sql
-WITH target_currency_rate AS (
-    SELECT cr.currency_id, cr.rate
-    FROM currencies_rate cr
-    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
-)
-SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
-FROM user_operations_turnover
-WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
-  AND executed_at >= now() - INTERVAL '1 days'
-GROUP BY currency) tmp
-LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
-CROSS JOIN target_currency_rate tcr;
-
-WITH target_currency_rate AS (
-    SELECT cr.currency_id, cr.rate
-    FROM currencies_rate cr
-    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
-)
-```
-
-
-```json
+```json Пример входящего запроса
 {
   "coinList": [
     {
@@ -248,4 +152,102 @@ WITH target_currency_rate AS (
 }
 
 ```
+    
+Задание N2.
+
+Сделать контроллер для расчета недельного объема операций пользователя в валюте, которая приходит как параметр
+   Требования:
+
+       - Входит в группу /turnover  
+       - Возвращает 200 статус код  
+       - GET метод с энпоинтом /week
+       - /week - это оборот за сейчас минус 7*24 часа
+       - Принимает обязательный path параметр (user-id)  
+       - Принимает обязательный query параметр (coin) который определяет валюту в который необходимо рассчитать объем операций (Если отправляется RUB, то сумма всех операций в рубле)
+       - Ответ необходимо отправить объект с одним полем result в качестве числа выраженного в валюте, которая была прислала (coin).
+
+
+Например:
+
+Запрос GET /turnover/daily/ee6c8623-02f5-438e-9c4d-24179da54307?coin=BTC 
+
+Ответ: 
+
+```json
+{
+  "result": 134543.23543
+}
+```
+
+
+3. Скрипт для генерации данных
+```sql
+CREATE OR REPLACE FUNCTION generate_user_operations_turnover_records()
+    RETURNS void AS $$
+DECLARE
+    rec_currency RECORD;
+    rec_type RECORD;
+    currency_code TEXT;
+    currency_type TEXT;
+    random_amount NUMERIC;
+    random_date TIMESTAMP;
+    random_user_id UUID;
+    i INTEGER;
+BEGIN
+    FOR i IN 1..100000 LOOP
+            SELECT code, type INTO rec_currency
+            FROM supported_currencies
+            ORDER BY random()
+            LIMIT 1;
+            currency_code := rec_currency.code;
+            currency_type := rec_currency.type;
+            IF currency_type = 'FIAT' THEN
+                random_amount := round(CAST(random() * 100000 AS numeric), 2);
+            ELSE
+                random_amount := round(CAST(random() * 100000 AS numeric), 8);
+            END IF;
+            random_date := NOW() - (random() * INTERVAL '8 days');
+            random_user_id := CASE WHEN random() < 0.5
+                                       THEN 'ee6c8623-02f5-438e-9c4d-24179da54307'::UUID
+                                   ELSE '5c6569b5-57e8-45ab-a72f-ff7affbd874e'::UUID
+                END;
+            INSERT INTO user_operations_turnover (operation_id, currency, user_id, subject, amount, executed_at)
+            VALUES (
+                       gen_random_uuid(),           
+                       currency_code,               
+                       random_user_id,              
+                       currency_type,               
+                       random_amount,               
+                       random_date                  
+                   );
+        END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT generate_user_operations_turnover_records();
+```
+
+4. SQL чтобы проверить результаты:
+```sql
+WITH target_currency_rate AS (
+    SELECT cr.currency_id, cr.rate
+    FROM currencies_rate cr
+    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
+)
+SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
+FROM user_operations_turnover
+WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
+  AND executed_at >= now() - INTERVAL '1 days'
+GROUP BY currency) tmp
+LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
+CROSS JOIN target_currency_rate tcr;
+
+WITH target_currency_rate AS (
+    SELECT cr.currency_id, cr.rate
+    FROM currencies_rate cr
+    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
+)
+```
+
+
 
