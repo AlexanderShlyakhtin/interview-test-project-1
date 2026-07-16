@@ -1,0 +1,22 @@
+services:
+
+  bitruby-test-postgres:
+    image: postgres:16-alpine
+    container_name: bitruby-test-postgres
+    ports:
+      - "5430:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: bitruby
+      TZ: UTC
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d bitruby" ]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    volumes:
+      - bitruby-test-pgdata:/var/lib/postgresql/data
+
+volumes:
+  bitruby-test-pgdata:

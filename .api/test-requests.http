@@ -1,7 +1,15 @@
+### Существующий эндпоинт: дневной оборот
 GET http://localhost:8080/turnover/daily/ee6c8623-02f5-438e-9c4d-24179da54307?coin=USD
 Accept: application/json
-###
 
-GET http://localhost:8080/turnover/ee6c8623-02f5-438e-9c4d-24179da54307?coin=USD
+### Задание 1: недельный оборот
+GET http://localhost:8080/turnover/week/ee6c8623-02f5-438e-9c4d-24179da54307?coin=BTC
 Accept: application/json
-###
+
+### Задание 1: неизвестная валюта — ожидается 400
+GET http://localhost:8080/turnover/week/ee6c8623-02f5-438e-9c4d-24179da54307?coin=XXX
+Accept: application/json
+
+### Задание 3 (*): пиковое 24-часовое окно за последние 7 дней
+GET http://localhost:8080/turnover/peak/ee6c8623-02f5-438e-9c4d-24179da54307?coin=USD
+Accept: application/json

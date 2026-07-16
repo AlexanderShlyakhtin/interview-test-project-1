@@ -1,4 +1,4 @@
-package dev.bitruby.testproject.incomes.rest.controllers;
+package dev.bitruby.testproject.adapter.in.web;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

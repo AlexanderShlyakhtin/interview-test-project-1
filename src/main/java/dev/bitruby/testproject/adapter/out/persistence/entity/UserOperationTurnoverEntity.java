@@ -1,10 +1,11 @@
-package dev.bitruby.testproject.outcomes.postgres.domain;
+package dev.bitruby.testproject.adapter.out.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,7 +17,6 @@ import java.util.UUID;
 @Setter
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "user_operations_turnover")
 public class UserOperationTurnoverEntity {
@@ -24,9 +24,10 @@ public class UserOperationTurnoverEntity {
   @Id
   @Column(name = "operation_id")
   private UUID operationId;
-  
-  @Column(name = "currency", nullable = false)
-  private String currency; // For example, USD,EUR,BTC
+
+  @ManyToOne
+  @JoinColumn(name = "currency", nullable = false, referencedColumnName = "code")
+  private CurrencyEntity currency;
 
   @Column(name = "user_id", nullable = false)
   private UUID userId;
@@ -37,4 +38,3 @@ public class UserOperationTurnoverEntity {
   @Column(name = "executed_at", nullable = false)
   private LocalDateTime executedAt;
 }
-

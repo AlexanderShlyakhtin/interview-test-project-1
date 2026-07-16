@@ -1,6 +1,6 @@
-package dev.bitruby.testproject.outcomes.postgres.repository;
+package dev.bitruby.testproject.adapter.out.persistence.repository;
 
-import dev.bitruby.testproject.outcomes.postgres.domain.CurrencyRateEntity;
+import dev.bitruby.testproject.adapter.out.persistence.entity.CurrencyRateEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

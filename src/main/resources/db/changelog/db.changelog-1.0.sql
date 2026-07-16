@@ -27,6 +27,16 @@ CREATE TABLE currencies_rate
 );
 
 --changeset test:4
+CREATE TABLE user_operation_details
+(
+    id UUID PRIMARY KEY,
+    operation_id UUID NOT NULL UNIQUE REFERENCES user_operations_turnover(operation_id),
+    fee DECIMAL(38,18) NOT NULL,
+    tx_hash VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP NOT NULL
+);
+
+--changeset test:5
 INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233151', 'KGS', 'FIAT');
 INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233152', 'KZT', 'FIAT');
 INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233153', 'RUB', 'FIAT');
@@ -54,7 +64,7 @@ INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-81
 INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d16', 'LINK', 'CRYPTO');
 INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d22', 'USDT', 'CRYPTO');
 
---changeset test:5
+--changeset test:6
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233151', 'KGS', 87.45);
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233152', 'KZT', 498.21);
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233153', 'RUB', 90);

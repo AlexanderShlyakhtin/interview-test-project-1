@@ -1,4 +1,4 @@
-package dev.bitruby.testproject.outcomes.postgres.domain;
+package dev.bitruby.testproject.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -16,7 +16,7 @@ public class CurrencyRateEntity {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @OneToOne
+  @ManyToOne
   @JoinColumn(name = "currency_id", nullable = false, referencedColumnName = "code")
   private CurrencyEntity currency;
 

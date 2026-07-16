@@ -1,9 +1,10 @@
-package dev.bitruby.testproject.outcomes.postgres.domain;
+package dev.bitruby.testproject.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -18,5 +19,8 @@ public class CurrencyEntity {
 
   @Column(name = "CODE", unique = true, nullable = false)
   private String code;
+
+  @OneToMany(mappedBy = "currency")
+  private List<CurrencyRateEntity> rates;
 
 }

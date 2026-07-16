@@ -1,53 +1,126 @@
+# Тестовый проект: обороты пользователей (crypto/fiat)
 
-1. Информация по БД:
-![currencies_rate.png](currencies_rate.png)
+Мини-сервис на Spring Boot 3 / Java 17 / PostgreSQL / Liquibase.
+Считает обороты операций пользователей с конвертацией по курсам валют.
+
+## Быстрый старт
+
+1. Поднять БД (данные создадутся и засидятся автоматически при старте приложения):
+
+```bash
+docker compose up -d
+```
+
+2. Запустить приложение (Liquibase накатит схему и сгенерирует 1 000 000 операций с деталями за последние 8 дней; первый старт занимает ~20 секунд):
+
+```bash
+./mvnw spring-boot:run
+```
+
+3. Проверить, что всё работает — существующий эндпоинт дневного оборота:
+
+```bash
+curl "http://localhost:8080/turnover/daily/ee6c8623-02f5-438e-9c4d-24179da54307?coin=USD"
+```
+
+Готовые запросы лежат в [.api/test-requests.http](.api/test-requests.http).
+
+Подключение к БД: `jdbc:postgresql://localhost:5430/bitruby`, `user` / `password`.
+Консоль БД одной командой (для контрольных SQL из заданий):
+
+```bash
+docker exec -it bitruby-test-postgres psql -U user -d bitruby
+```
+
+## Модель данных
+
+```sql
+-- доступные валюты системы
+CREATE TABLE supported_currencies
+(
+    id   UUID PRIMARY KEY,
+    code VARCHAR(10) NOT NULL UNIQUE,        -- 'USD', 'BTC', ...
+    type VARCHAR(10) NOT NULL                -- 'FIAT' | 'CRYPTO'
+);
+
+-- курсы валют: FIAT выражен в USD, CRYPTO — в USDT
+CREATE TABLE currencies_rate
+(
+    id          UUID PRIMARY KEY,
+    currency_id VARCHAR(10) NOT NULL UNIQUE REFERENCES supported_currencies (code),
+    rate        DECIMAL(38, 18) NOT NULL
+);
+
+-- история операций пользователей;
+-- amount — сумма сделки в натуральном выражении (сделка в XRP — количество XRP);
+-- currency всегда присутствует в supported_currencies(code)
+CREATE TABLE user_operations_turnover
+(
+    operation_id UUID PRIMARY KEY,
+    currency     VARCHAR(10) NOT NULL,
+    subject      VARCHAR(10) NOT NULL,
+    user_id      UUID NOT NULL,
+    amount       DECIMAL(38, 18) NOT NULL,
+    executed_at  TIMESTAMP
+);
+
+-- детали операции, 1:1 к user_operations_turnover
+CREATE TABLE user_operation_details
+(
+    id           UUID PRIMARY KEY,
+    operation_id UUID NOT NULL UNIQUE REFERENCES user_operations_turnover (operation_id),
+    fee          DECIMAL(38, 18) NOT NULL,
+    tx_hash      VARCHAR(64) NOT NULL,
+    created_at   TIMESTAMP NOT NULL
+);
+```
+
+Про курсы:
+
+1. Курс валют типа `FIAT` выражен в USD (например, 1 USD = 90 RUB).
+2. Курс валют типа `CRYPTO` выражен в USDT (например, 1 BTC = 62869.94 USDT).
+3. Принимаем, что USD = USDT. Оба присутствуют в таблице курсов с rate = 1 для удобства.
+
+Про данные:
+
+1. В таблице операций два пользователя:
+    - `5c6569b5-57e8-45ab-a72f-ff7affbd874e`
+    - `ee6c8623-02f5-438e-9c4d-24179da54307`
+2. Данные сгенерированы на интервале «сейчас минус 8 дней … сейчас», всего 1 000 000 записей.
+
+## Структура проекта
+
+Сервис устроен по гексагональной архитектуре (ports & adapters):
+
+```text
+dev.bitruby.testproject
+├── domain/                        — доменные модели (Operation, CurrencyRate)
+├── application/
+│   ├── port/in/                   — входные порты (GetTurnoverUseCase)
+│   ├── port/out/                  — выходные порты (OperationPort, CurrencyRatePort)
+│   └── service/                   — реализация use case (TurnoverService)
+└── adapter/
+    ├── in/web/                    — REST-контроллер и DTO
+    └── out/persistence/           — JPA-сущности, репозитории, адаптер портов
+```
+
+---
+
+## Задания
 
 
-- Таблица supported_currencies хранит доступные валюты в системе
-  - id - UUID primary key
-  - code - VARCHAR(10) - уникальный ключ валюты
-- Таблица currencies_rate хранит курсы валют для с ссылкой на таблицу supported_currencies(code), где:
-  - id - UUID primary key
-  - currency_id - FOREIGN KEY to supported_currencies(id)
-  - rate DECIMAL(38,18) - курс монеты
-- Таблица user_operations_turnover хранит историю операций пользователей, причем поле currency хранить валюты
-  которые 100% присуствуют в supported_currencies(code).
-  - operation_id - UUID PRIMARY KEY 
-  - currency - VARCHAR(10) код валюты, в которой была совершена операция
-  - user_id - UUID ИД пользователя, который соврешил операцию
-  - amount - DECIMAL(38,18) сумма сделки в натуральном выражении (если была сделана в XRP, то объект купленных или проданных XRP)
-  - executed_at - TIMESTAMP NOT NULL время, когда была сделана операция
+### Задание 1. Недельный оборот (разминка)
 
-Дополнительная информация:
-  - currencies_rate
-    1) Курс валют type FIAT выражен в USD. (Например, 1 USD = 90 RUB)
-    2) Курс валют type CRYPTO выражен в USDT (Например, 1 BTC = 62869.94 USDT)
-    3) По умолчанию, что USD = USDT. USD и USDT также присуствуют в таблице рейтов (1 USD = 1 USD, 1 USDT = 1 USDT) для удобства
-  - user_operations_turnover
-    1) В таблице существуют два пользователя Существует в БД для пользователя:
-       - 5c6569b5-57e8-45ab-a72f-ff7affbd874e
-       - ee6c8623-02f5-438e-9c4d-24179da54307
-    2) Данные сгенерированы для интервала от сейчас до 8 дней минус сейчас. Всего 100 000 записей
+В сервисе уже есть расчёт дневного оборота (`GET /turnover/daily/{user-id}?coin=`).
+Нужно добавить расчёт недельного оборота.
 
-2. Задание:
+Требования:
 
-1) Сделать контроллер для расчета недельного объема операций пользователя в валюте, которая приходит как параметр
-   Требования:
-
-       - Входит в группу /turnover  
-       - Возвращает 200 статус код  
-       - GET метод с энпоинтом /week
-       - /week - это оборот за сейчас минус 7*24 часа
-       - Принимает обязательный path параметр (user-id)  
-       - Принимает обязательный query параметр (coin) который определяет валюту в который необходимо рассчитать объем операций (Если отправляется RUB, то сумма всех операций в рубле)
-       - Ответ необходимо отправить объект с одним полем result в качестве числа выраженного в валюте, которая была прислала (coin).
-
-
-Например:
-
-Запрос GET /turnover/daily/ee6c8623-02f5-438e-9c4d-24179da54307?coin=BTC 
-
-Ответ: 
+- Группа `/turnover`, метод `GET`, эндпоинт `/week/{user-id}`.
+- Неделя = «сейчас минус 7 * 24 часа».
+- Обязательный path-параметр `user-id`, обязательный query-параметр `coin` — валюта,
+  в которой нужно выразить оборот (если прислали `RUB` — сумма всех операций в рублях).
+- Ответ `200` и объект с одним полем `result` — число в валюте `coin`:
 
 ```json
 {
@@ -55,72 +128,171 @@
 }
 ```
 
-4. SQL чтобы проверить результаты:
+- Если `coin` не существует в системе — ответ `400` (не `500`) с понятным телом ошибки.
+- Если операций за период нет — `200` и `result: 0`.
 
-```sql
-WITH target_currency_rate AS (
-    SELECT cr.currency_id, cr.rate
-    FROM currencies_rate cr
-    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
-)
-SELECT tcr.currency_id, agr.total/tcr.rate as turnover FROM (SELECT SUM(sum * cr.rate) as total FROM (SELECT currency, Sum(amount) as sum
-FROM user_operations_turnover
-WHERE user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
-  AND executed_at >= now() - INTERVAL '1 days'
-GROUP BY currency) tmp
-LEFT JOIN currencies_rate cr ON tmp.currency = cr.currency_id) agr
-CROSS JOIN target_currency_rate tcr;
+**Проверка.** HTTP-запросы:
 
-WITH target_currency_rate AS (
-    SELECT cr.currency_id, cr.rate
-    FROM currencies_rate cr
-    WHERE cr.currency_id = 'USD' -- Указать целевую валюту (например, BTC)
-)
+```bash
+# основной сценарий
+curl "http://localhost:8080/turnover/week/ee6c8623-02f5-438e-9c4d-24179da54307?coin=BTC"
 ```
 
-Скрипт для генерации данных
-```sql
-CREATE OR REPLACE FUNCTION generate_user_operations_turnover_records()
-    RETURNS void AS $$
-DECLARE
-    rec_currency RECORD;
-    rec_type RECORD;
-    currency_code TEXT;
-    currency_type TEXT;
-    random_amount NUMERIC;
-    random_date TIMESTAMP;
-    random_user_id UUID;
-    i INTEGER;
-BEGIN
-    FOR i IN 1..100000 LOOP
-            SELECT code, type INTO rec_currency
-            FROM supported_currencies
-            ORDER BY random()
-            LIMIT 1;
-            currency_code := rec_currency.code;
-            currency_type := rec_currency.type;
-            IF currency_type = 'FIAT' THEN
-                random_amount := round(CAST(random() * 100000 AS numeric), 2);
-            ELSE
-                random_amount := round(CAST(random() * 100000 AS numeric), 8);
-            END IF;
-            random_date := NOW() - (random() * INTERVAL '8 days');
-            random_user_id := CASE WHEN random() < 0.5
-                                       THEN 'ee6c8623-02f5-438e-9c4d-24179da54307'::UUID
-                                   ELSE '5c6569b5-57e8-45ab-a72f-ff7affbd874e'::UUID
-                END;
-            INSERT INTO user_operations_turnover (operation_id, currency, user_id, subject, amount, executed_at)
-            VALUES (
-                       gen_random_uuid(),           
-                       currency_code,               
-                       random_user_id,              
-                       currency_type,               
-                       random_amount,               
-                       random_date                  
-                   );
-        END LOOP;
-END;
-$$ LANGUAGE plpgsql;
-
-SELECT generate_user_operations_turnover_records();
+```bash
+# неизвестная валюта — ожидается 400
+curl -i "http://localhost:8080/turnover/week/ee6c8623-02f5-438e-9c4d-24179da54307?coin=XXX"
 ```
+
+Контрольный SQL — число должно совпасть с полем `result` из ответа:
+
+```sql
+WITH target AS (
+    SELECT rate FROM currencies_rate WHERE currency_id = 'BTC' -- целевая валюта (coin)
+)
+SELECT SUM(t.amount * cr.rate) / target.rate AS turnover
+FROM user_operations_turnover t
+JOIN currencies_rate cr ON cr.currency_id = t.currency
+CROSS JOIN target
+WHERE t.user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
+  AND t.executed_at >= now() - INTERVAL '7 days'
+GROUP BY target.rate;
+```
+
+Нюанс сверки: данные распределены по времени непрерывно, а окно привязано к «сейчас» —
+выполняйте HTTP-запрос и SQL сразу друг за другом, иначе граница окна успеет сместиться
+и последние значащие цифры разойдутся.
+
+### Задание 2. Прод-инцидент: деградация производительности (основное)
+
+Вводная: в проде таблица `user_operations_turnover` выросла до 10+ млн строк (локально — 1 млн).
+Мониторинг показывает: p99 у `/turnover/daily` — секунды, память сервиса растёт с каждым запросом,
+инстансы периодически падают по OOM.
+
+Нужно найти и устранить **минимум три** причины деградации, не меняя контракт API.
+
+Правила:
+
+- Данные в БД менять нельзя; добавлять новые объекты БД (например, индексы) — можно,
+  миграциями Liquibase.
+- Результат расчёта должен остаться корректным (сверяйтесь с контрольным SQL).
+
+Подсказка: включите `spring.jpa.show-sql: true` и посмотрите, какие SQL-запросы реально
+уходят в базу и сколько строк они возвращают.
+
+**Проверка.** HTTP-запрос (до и после оптимизации — число не должно измениться):
+
+```bash
+curl "http://localhost:8080/turnover/daily/ee6c8623-02f5-438e-9c4d-24179da54307?coin=USD"
+```
+
+Нагрузочная проверка — [scripts/load-test.sh](scripts/load-test.sh) параллельно шлёт запросы
+разными пользователями и валютами и печатает перцентили времени ответа:
+
+```bash
+./scripts/load-test.sh                                # 100 запросов, 10 параллельно
+REQUESTS=200 CONCURRENCY=20 ./scripts/load-test.sh    # пожёстче
+ENDPOINTS="daily week" ./scripts/load-test.sh         # после задания 1 — оба эндпоинта
+```
+
+Пример вывода:
+
+```text
+Load test: 200 requests, concurrency=20, endpoints: daily
+
+OK: 200  errors(non-200): 0  wall time: 6s  throughput: ~33.3 req/s
+
+  min         333 ms
+  avg         557 ms
+  p50         454 ms
+  p90         863 ms
+  p95        1178 ms
+  p99        1242 ms
+  max        1417 ms
+```
+
+Ориентир: это перцентили исходной реализации на референсной машине. После правильного
+набора исправлений p50/p99 должны упасть примерно на порядок — прогоните скрипт до и
+после и сравните.
+
+Контрольный SQL — тот же, что в задании 1, только с `INTERVAL '1 days'` и валютой `USD`:
+
+```sql
+WITH target AS (
+    SELECT rate FROM currencies_rate WHERE currency_id = 'USD' -- целевая валюта (coin)
+)
+SELECT SUM(t.amount * cr.rate) / target.rate AS turnover
+FROM user_operations_turnover t
+JOIN currencies_rate cr ON cr.currency_id = t.currency
+CROSS JOIN target
+WHERE t.user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
+  AND t.executed_at >= now() - INTERVAL '1 days'
+GROUP BY target.rate;
+```
+
+### Задание 3*. Пиковое 24-часовое окно (со звёздочкой)
+
+Комплаенс просит находить всплески активности: для пользователя нужно найти **скользящее
+24-часовое окно** (не календарные сутки) с максимальным суммарным оборотом за последние 7 дней.
+
+Требования:
+
+- `GET /turnover/peak/{user-id}?coin=` — оборот в валюте `coin`, как в остальных эндпоинтах.
+- Ответ `200`:
+
+```json
+{
+  "windowStart": "2026-07-14T10:23:11",
+  "windowEnd": "2026-07-15T10:23:11",
+  "result": 1234567.89
+}
+```
+
+- `windowStart` — время операции, с которой начинается лучшее окно; `windowEnd` = `windowStart` + 24 часа.
+- Ожидаемая сложность решения — лучше, чем перебор всех пар операций (O(n²)).
+
+**Проверка.** HTTP-запрос:
+
+```bash
+curl "http://localhost:8080/turnover/peak/ee6c8623-02f5-438e-9c4d-24179da54307?coin=USD"
+```
+
+Нагрузочная проверка — тем же скриптом:
+
+```bash
+ENDPOINTS="peak" ./scripts/load-test.sh                # только peak
+ENDPOINTS="daily week peak" REQUESTS=200 CONCURRENCY=20 ./scripts/load-test.sh   # все эндпоинты разом
+```
+
+Ориентир: peak работает с 7-дневным окном (сотни тысяч операций на пользователя), поэтому
+будет медленнее daily — это нормально. Важно, что время ответа стабильно: решение сложности
+O(n log n) отвечает за секунды даже под нагрузкой, а квадратичный перебор пар на таком объёме
+не ответит за разумное время вовсе.
+
+Контрольный SQL — `window_start` и `turnover_usd` должны совпасть с `windowStart` и `result`:
+
+```sql
+WITH ops AS (
+    SELECT t.executed_at, t.amount * cr.rate AS amount_usd
+    FROM user_operations_turnover t
+    JOIN currencies_rate cr ON cr.currency_id = t.currency
+    WHERE t.user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
+      AND t.executed_at >= now() - INTERVAL '7 days'
+)
+SELECT executed_at AS window_start,
+       SUM(amount_usd) OVER (
+           ORDER BY executed_at
+           RANGE BETWEEN CURRENT ROW AND INTERVAL '24 hours' FOLLOWING
+       ) AS turnover_usd
+FROM ops
+ORDER BY turnover_usd DESC
+LIMIT 1;
+```
+
+---
+
+## Что мы смотрим
+
+- Работоспособность: код собирается, запускается, эндпоинты возвращают корректные числа.
+- Владение Spring Boot / JPA / Stream API и понимание того, что происходит под капотом.
+- Аккуратность с деньгами: `BigDecimal`, округления, точность.
+- Умение рассуждать вслух: почему проблема именно здесь и почему выбранное решение — лучшее из простых.
