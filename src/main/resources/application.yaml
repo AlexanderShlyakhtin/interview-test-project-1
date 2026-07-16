@@ -1,6 +1,9 @@
 spring:
   application:
     name: test-service
+  jackson:
+    serialization:
+      write-bigdecimal-as-plain: true
   liquibase:
     change-log: db/db.changelog.yaml
     liquibase-schema: public

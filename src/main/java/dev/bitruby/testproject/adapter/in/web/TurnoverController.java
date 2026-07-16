@@ -21,4 +21,11 @@ public class TurnoverController {
     return new ResponseEntity<>(new ResultDto(getTurnoverUseCase.getDailyTurnover(userId, coin)),
         HttpStatus.OK);
   }
+
+  @GetMapping("/week/{user-id}")
+  public ResponseEntity<ResultDto> getWeeklyTurnover(@PathVariable("user-id") UUID userId,
+      @RequestParam("coin") String coin) {
+    return new ResponseEntity<>(new ResultDto(getTurnoverUseCase.getWeeklyTurnover(userId, coin)),
+        HttpStatus.OK);
+  }
 }
