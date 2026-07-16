@@ -2,6 +2,7 @@ package dev.bitruby.testproject.adapter.out.persistence.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -25,7 +26,7 @@ public class UserOperationTurnoverEntity {
   @Column(name = "operation_id")
   private UUID operationId;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "currency", nullable = false, referencedColumnName = "code")
   private CurrencyEntity currency;
 

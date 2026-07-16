@@ -5,7 +5,6 @@ import dev.bitruby.testproject.application.port.in.GetTurnoverUseCase;
 import dev.bitruby.testproject.application.port.out.CurrencyRatePort;
 import dev.bitruby.testproject.application.port.out.OperationPort;
 import dev.bitruby.testproject.domain.CurrencyRate;
-import dev.bitruby.testproject.domain.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -44,9 +43,7 @@ public class TurnoverService implements GetTurnoverUseCase {
     if (targetRate == null) {
       throw new CurrencyNotFoundException(coin);
     }
-    return operationPort.findOperations(userId, LocalDateTime.now().minusDays(days)).stream()
-        .collect(Collectors.groupingBy(Operation::currencyCode,
-            Collectors.reducing(BigDecimal.ZERO, Operation::amount, BigDecimal::add)))
+    return operationPort.sumTurnoverByCurrency(userId, LocalDateTime.now().minusDays(days))
         .entrySet().stream()
         .map(entry -> entry.getValue().multiply(rateByCode.get(entry.getKey())))
         .reduce(BigDecimal.ZERO, BigDecimal::add)

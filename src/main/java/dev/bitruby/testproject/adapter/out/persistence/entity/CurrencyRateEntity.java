@@ -16,7 +16,7 @@ public class CurrencyRateEntity {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "currency_id", nullable = false, referencedColumnName = "code")
   private CurrencyEntity currency;
 
