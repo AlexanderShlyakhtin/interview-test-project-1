@@ -9,17 +9,14 @@ CREATE TABLE user_operations_turnover
     user_id UUID NOT NULL,
     amount DECIMAL(38,18) NOT NULL,
     executed_at TIMESTAMP
+
 );
 --changeset test:2
 CREATE TABLE supported_currencies
 (
     id UUID PRIMARY KEY,
     code VARCHAR(10) NOT NULL UNIQUE,
-    is_active BOOLEAN NOT NULL DEFAULT false,
-    type VARCHAR(10) NOT NULL,
-    min_deposit_amount DECIMAL(38,18) NOT NULL DEFAULT 0,
-    min_withdraw_amount DECIMAL(38,18) NOT NULL DEFAULT 0,
-    min_exchange_amount DECIMAL(38,18) NOT NULL DEFAULT 0
+    type VARCHAR(10) NOT NULL
 );
 --changeset test:3
 CREATE TABLE currencies_rate
@@ -30,34 +27,44 @@ CREATE TABLE currencies_rate
 );
 
 --changeset test:4
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233151', 'KGS', true, 'FIAT');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233152', 'KZT', true, 'FIAT');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233153', 'RUB', true, 'FIAT');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233154', 'EUR', true, 'FIAT');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233155', 'USD', true, 'FIAT');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233156', 'AED', true, 'FIAT');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d14', 'NEAR', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d2b', 'XRP', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d9b', 'TON', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d09', 'APEX', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d7b', 'ATOM', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233deb', 'SOL', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233ded', 'ETH', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233dea', 'TRX', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d1b', 'MATIC', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d6b', 'SHIB', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d15', 'SUI', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233def', 'BTC', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d12', 'DOGE', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d13', 'NOT', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d3b', 'MNT', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d8b', 'AVAX', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d17', 'USDE', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d11', 'STETH', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d16', 'LINK', true, 'CRYPTO');
-INSERT INTO supported_currencies (id, code, is_active, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d22', 'USDT', true, 'CRYPTO');
+CREATE TABLE user_operation_details
+(
+    id UUID PRIMARY KEY,
+    operation_id UUID NOT NULL UNIQUE REFERENCES user_operations_turnover(operation_id),
+    fee DECIMAL(38,18) NOT NULL,
+    tx_hash VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP NOT NULL
+);
 
 --changeset test:5
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233151', 'KGS', 'FIAT');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233152', 'KZT', 'FIAT');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233153', 'RUB', 'FIAT');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233154', 'EUR', 'FIAT');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233155', 'USD', 'FIAT');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233156', 'AED', 'FIAT');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d14', 'NEAR', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d2b', 'XRP', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d9b', 'TON', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d09', 'APEX', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d7b', 'ATOM', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233deb', 'SOL', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233ded', 'ETH', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233dea', 'TRX', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d1b', 'MATIC', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d6b', 'SHIB', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d15', 'SUI', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233def', 'BTC', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d12', 'DOGE', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d13', 'NOT', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d3b', 'MNT', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d8b', 'AVAX', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d17', 'USDE', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d11', 'STETH', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d16', 'LINK', 'CRYPTO');
+INSERT INTO supported_currencies (id, code, type) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233d22', 'USDT', 'CRYPTO');
+
+--changeset test:6
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233151', 'KGS', 87.45);
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233152', 'KZT', 498.21);
 INSERT INTO currencies_rate (id, currency_id, rate) VALUES ('d3c79efe-1a3d-4b56-819b-b67d09233153', 'RUB', 90);

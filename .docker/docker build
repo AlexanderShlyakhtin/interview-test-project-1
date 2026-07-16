@@ -1,1 +1,0 @@
-docker-compose -f app-minimal.yaml -p app-minimal-test up -d

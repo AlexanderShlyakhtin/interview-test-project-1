@@ -1,16 +1,14 @@
-package dev.bitruby.testproject.outcomes.postgres.domain;
+package dev.bitruby.testproject.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
 @Getter
-@Setter
 @NoArgsConstructor
 @Table(name = "currencies_rate")
 public class CurrencyRateEntity {
@@ -18,8 +16,9 @@ public class CurrencyRateEntity {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @Column(name = "currency_id", nullable = false)
-  private String currency;
+  @ManyToOne
+  @JoinColumn(name = "currency_id", nullable = false, referencedColumnName = "code")
+  private CurrencyEntity currency;
 
   @Column(name = "rate", nullable = false, scale = 18, precision = 38)
   private BigDecimal rate;
