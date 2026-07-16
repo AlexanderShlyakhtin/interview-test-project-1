@@ -211,8 +211,9 @@ OK: 200  errors(non-200): 0  wall time: 6s  throughput: ~33.3 req/s
 ```
 
 Ориентир: это перцентили исходной реализации на референсной машине. После правильного
-набора исправлений p50/p99 должны упасть примерно на порядок — прогоните скрипт до и
-после и сравните.
+набора исправлений одиночный запрос ускоряется на порядок, а перцентили под конкуренцией —
+в несколько раз (у нас: p50 455 → 94 мс, p99 1240 → 270 мс, throughput 33 → 100 req/s).
+Прогоните скрипт до и после и сравните.
 
 Контрольный SQL — тот же, что в задании 1, только с `INTERVAL '1 days'` и валютой `USD`:
 
@@ -256,11 +257,11 @@ GROUP BY target.rate;
 curl "http://localhost:8080/turnover/peak/ee6c8623-02f5-438e-9c4d-24179da54307?coin=USD"
 ```
 
-Нагрузочная проверка — тем же скриптом:
+Нагрузочная проверка — тем же скриптом (peak заметно тяжелее остальных эндпоинтов,
+поэтому меньше запросов):
 
 ```bash
-ENDPOINTS="peak" ./scripts/load-test.sh                # только peak
-ENDPOINTS="daily week peak" REQUESTS=200 CONCURRENCY=20 ./scripts/load-test.sh   # все эндпоинты разом
+ENDPOINTS="peak" REQUESTS=40 ./scripts/load-test.sh
 ```
 
 Ориентир: peak работает с 7-дневным окном (сотни тысяч операций на пользователя), поэтому
@@ -268,25 +269,43 @@ ENDPOINTS="daily week peak" REQUESTS=200 CONCURRENCY=20 ./scripts/load-test.sh  
 O(n log n) отвечает за секунды даже под нагрузкой, а квадратичный перебор пар на таком объёме
 не ответит за разумное время вовсе.
 
-Контрольный SQL — `window_start` и `turnover_usd` должны совпасть с `windowStart` и `result`:
+Контроль — два шага.
+
+Шаг 1: почасовые бакеты локализуют пик — `windowStart` из ответа должен попасть в час
+одного из верхних бакетов, а сумма — быть того же порядка:
 
 ```sql
-WITH ops AS (
-    SELECT t.executed_at, t.amount * cr.rate AS amount_usd
+WITH hourly AS (
+    SELECT date_trunc('hour', t.executed_at) AS hour_start,
+           SUM(t.amount * cr.rate)           AS s
     FROM user_operations_turnover t
     JOIN currencies_rate cr ON cr.currency_id = t.currency
     WHERE t.user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
       AND t.executed_at >= now() - INTERVAL '7 days'
+    GROUP BY 1
 )
-SELECT executed_at AS window_start,
-       SUM(amount_usd) OVER (
-           ORDER BY executed_at
-           RANGE BETWEEN CURRENT ROW AND INTERVAL '24 hours' FOLLOWING
-       ) AS turnover_usd
-FROM ops
-ORDER BY turnover_usd DESC
-LIMIT 1;
+SELECT hour_start,
+       SUM(s) OVER (ORDER BY hour_start ROWS BETWEEN CURRENT ROW AND 23 FOLLOWING) AS window_usd
+FROM hourly
+ORDER BY window_usd DESC
+LIMIT 3;
 ```
+
+Шаг 2: точная сумма найденного окна — подставьте `windowStart` из ответа эндпоинта;
+число должно совпасть с `result` (для `coin=USD`):
+
+```sql
+SELECT SUM(t.amount * cr.rate) AS turnover_usd
+FROM user_operations_turnover t
+JOIN currencies_rate cr ON cr.currency_id = t.currency
+WHERE t.user_id = 'ee6c8623-02f5-438e-9c4d-24179da54307'
+  AND t.executed_at >= '<windowStart>'
+  AND t.executed_at <= TIMESTAMP '<windowStart>' + INTERVAL '24 hours';
+```
+
+(«Лобовая» проверка одним `SUM(...) OVER (... RANGE BETWEEN CURRENT ROW AND '24 hours'
+FOLLOWING)` математически корректна, но на сотнях тысяч строк выполняется недопустимо
+долго — почему, кстати, — отдельный вопрос на подумать.)
 
 ---
 
