@@ -6,6 +6,7 @@ import dev.bitruby.testproject.adapter.out.persistence.repository.UserOperationT
 import dev.bitruby.testproject.application.port.out.CurrencyRatePort;
 import dev.bitruby.testproject.application.port.out.OperationPort;
 import dev.bitruby.testproject.domain.CurrencyRate;
+import dev.bitruby.testproject.domain.OperationAmount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +29,14 @@ public class TurnoverPersistenceAdapter implements OperationPort, CurrencyRatePo
     return turnoverRepository.sumTurnoverByCurrency(userId, from).stream()
         .collect(Collectors.toMap(CurrencyTurnoverView::getCurrencyCode,
             CurrencyTurnoverView::getTotal));
+  }
+
+  @Override
+  public List<OperationAmount> findOperationAmountsInUsd(UUID userId, LocalDateTime from) {
+    return turnoverRepository.findOperationAmountsInUsd(userId, from).stream()
+        .map(view -> new OperationAmount(view.getExecutedAt().toLocalDateTime(),
+            view.getAmountUsd()))
+        .toList();
   }
 
   @Override

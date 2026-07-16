@@ -20,4 +20,12 @@ public interface UserOperationTurnoverRepository
       + "group by t.currency.code")
   List<CurrencyTurnoverView> sumTurnoverByCurrency(@Param("userId") UUID userId,
       @Param("from") LocalDateTime from);
+
+  @Query(value = "SELECT t.executed_at AS \"executedAt\", t.amount * cr.rate AS \"amountUsd\" "
+      + "FROM user_operations_turnover t "
+      + "JOIN currencies_rate cr ON cr.currency_id = t.currency "
+      + "WHERE t.user_id = :userId AND t.executed_at >= :from "
+      + "ORDER BY t.executed_at", nativeQuery = true)
+  List<OperationAmountView> findOperationAmountsInUsd(@Param("userId") UUID userId,
+      @Param("from") LocalDateTime from);
 }
